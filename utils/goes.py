@@ -234,7 +234,10 @@ class GOESImageProcessor:
             logger_qc.debug(f'Buscando arhcivo de imagen: {filename}')
             if self.validate_images_goes(filename):               
                 return filename
-
+            else:
+                self.errors.append(f"No se ha descargado aun la fecha {filename}")
+                self.success = False
+                return ''
             logger_qc.debug(f'Leyendo archivo dataset en : {filename}')
             f = Dataset(filename, 'w', format='NETCDF4')
             f.close()
