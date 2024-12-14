@@ -9,7 +9,6 @@
 Icon
 
 *.logs
-imagenes/*.nc
 imagenes/dlImages/*.nc
 
 # Thumbnails
