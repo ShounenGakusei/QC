@@ -21,9 +21,11 @@ is_running = False
 
 
 def check_config():
+    print(f'PARAMETROS INCIALES DEL SISTEMA! ')
     for attribute, value in vars(Config).items():
-        print(f'PARAMETROS INCIALES DEL SISTEMA! ')
         print(f'{attribute}: {value}')
+
+check_config()
 
 @app.route('/')
 def home():
