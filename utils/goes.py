@@ -95,25 +95,41 @@ class GOESImageProcessor:
         return valido
 
     def save_nc_file(self, filename, i, c, CMI, LonsCen, LatsCen):
+        # Crear el archivo si no existe
+        if not os.path.isfile(filename):
+            with Dataset(filename, 'w', format='NETCDF4') as f:
+                f.setncattr('file_description', 'Archivo generado por el procesamiento GOES')
+                logger_qc.info(f"Archivo {filename} creado.")
+
         try:
             logger_qc.info(f"Guardando datos en {filename}, grupo {c}-{i}")
-            f = Dataset(filename, 'a', format='NETCDF4')
-            tmpGroup = f.createGroup(f'{c}-{i}')
+            
+            with Dataset(filename, 'a', format='NETCDF4') as f:
+                # Crear un grupo para el canal y tiempo
+                tmpGroup = f.createGroup(f'{c}-{i}')
 
-            tmpGroup.createDimension('longitude', LonsCen.shape[1])
-            tmpGroup.createDimension('latitude', LatsCen.shape[0])
+                # Dimensiones del grupo
+                tmpGroup.createDimension('longitude', LonsCen.shape[1])
+                tmpGroup.createDimension('latitude', LatsCen.shape[0])
 
-            parameter01 = tmpGroup.createVariable('CMI', CMI.dtype.type, ('latitude', 'longitude'), zlib=True)
-            parameter01[:, :] = CMI
+                # Crear variable y asignar los datos
+                parameter01 = tmpGroup.createVariable('CMI', CMI.dtype.type, ('latitude', 'longitude'), zlib=True)
+                parameter01[:, :] = CMI
 
-            creation_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            f.setncattr('creation_date', creation_date)
+                # Agregar atributos al archivo
+                creation_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                f.setncattr('creation_date', creation_date)
+                logger_qc.info(f"Datos guardados exitosamente en el grupo {c}-{i}.")
 
-            f.close()
         except Exception as e:
+            # Registrar el error y asegurar que no quede el archivo en un estado inconsistente
             self.errors.append(f"Error en save_nc_file ({c}-{i}): {e}")
             self.success = False
-            logger_qc.error(f"Error al guardar archivo NetCDF: {e}")
+            logger_qc.error(f"Error al guardar archivo NetCDF en {filename}: {e}")
+            return True  # Indicar que hubo un error
+
+        return False  # Todo se guardó correctamente
+
 
     def reproject(self, CMI, LonCen, LatCen, LonCenCyl, LatCenCyl):
         try:
@@ -215,36 +231,28 @@ class GOESImageProcessor:
             logger_qc.info(f"--------Iniciando descarga de imagen GOES para {fecha}")
             domain = Config.DOMAIN
 
-            
-
             logger_qc.debug(f'Buscando arhcivo de imagen: {Config.IMAGEM_PATH}')
             filename = os.path.join(Config.IMAGEM_PATH,f'{fecha}.nc')
             logger_qc.debug(f'Buscando arhcivo de imagen: {filename}')
             if self.validate_images_goes(filename):               
                 return filename
-            else:
-                self.errors.append(f"No se ha descargado aun la fecha {filename}")
-                self.success = False
-                return ''
             
-
             # Coordenadas iniciales
             pixresol = 2.0
             xmin, xmax = 80, 1030
             ymin, ymax = 700, 1900
 
-            lat_cor = 14.0 + np.arange(3665) * (-pixresol / 111.0)
-            lon_cor = -85.0 + np.arange(2945) * (pixresol / 111.0)
+            lat_cor = 14.0 + np.arange(ymin, ymax + 1) * (-pixresol / 111.0)
+            lon_cor = -85.0 + np.arange(xmin, xmax + 1) * (pixresol / 111.0)
+
             lat_cen = lat_cor[:-1] - (pixresol / 2.0) / 111.0
             lon_cen = lon_cor[:-1] + (pixresol / 2.0) / 111.0
+
             lon_cor, lat_cor = np.meshgrid(lon_cor, lat_cor)
             lon_cen, lat_cen = np.meshgrid(lon_cen, lat_cen)
-            lon_cor, lat_cor = lon_cor[ymin:ymax + 1, xmin:xmax + 1], lat_cor[ymin:ymax + 1, xmin:xmax]
-            lon_cen, lat_cen = lon_cen[ymin:ymax, xmin:xmax], lat_cen[ymin:ymax, xmin:xmax]
+       
 
             logger_qc.debug(f'Leyendo archivo dataset en : {filename}')
-            f = Dataset(filename, 'w', format='NETCDF4')
-            f.close()
             
             logger_qc.debug(f'Convirtiendo fecha del goes')
             fecha_ini = self.conver_goes_date(fecha, mm=-(10 * len(Config.TIEMPOS))) # TODO - len(p['tiempos'])
