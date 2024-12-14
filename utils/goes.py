@@ -27,10 +27,12 @@ def schedule_download():
     
 class GOESImageProcessor:
     def __init__(self):
+        logger_qc.debug("Iniciando GOES class")
         self.errors = []  # Lista para almacenar errores
         self.success = True  # Indicador de éxito
 
     def validate_images_goes(self, filename):
+        logger_qc.debug(f'Validando archivo de imagen : {filename}')
         if not os.path.exists(filename):
             logger_qc.info("Validacion Imagen (False): No existe el archivo")
             return False
@@ -39,8 +41,9 @@ class GOESImageProcessor:
         file_size = os.path.getsize(filename)
 
         creation_time = datetime.fromtimestamp(os.path.getctime(filename))
-        print('Fecha de creacion del archivo',creation_time)
-        print('Tamañ del archvo',file_size)
+        logger_qc.debug(f'Fecha de creacion del archivo {creation_time}')
+        logger_qc.debug(f'Tamañ del archvo {file_size}')
+    
         if (datetime.now() - creation_time) > timedelta(minutes=10):
             if file_size < Config.MIN_IMAGE_SIZE:
                 logger_qc.info("Validacion Imagen (False): El archivo es menor a 20mb y ya paso 10min desde su creacion")
@@ -55,7 +58,7 @@ class GOESImageProcessor:
             # Lógica de validación de estructura del archivo GOES (reemplazar con validación real)
             # Ejemplo: Verifica si el archivo NetCDF tiene las variables esperadas.
             with Dataset(filename, 'r') as ds:
-                
+                logger_qc.debug(f'Leyendo file dataset', filename)
                 # Recorrer los canales y tiempos definidos en Config
                 for c in Config.CANALES:
                     if not valido:
@@ -199,8 +202,10 @@ class GOESImageProcessor:
 
 
     def download_image_goes(self, fecha):
+        logger_qc.debug(f'Iniciando meotdo download_image_goes')
         pattern = r'^\d{4}-\d{2}-\d{2}-\d{2}-\d{2}$'  # Formato: YYYY-MM-DD-HH-MM
         if not re.match(pattern, fecha):
+            logger_qc.debug(f'No se ingreso el foromato adecuado de fecha: {fecha}')
             self.errors.append("Formato de fecha inválido. Use YYYY-MM-DD-HH-MM.")
             self.success = False
             return ''
@@ -224,43 +229,57 @@ class GOESImageProcessor:
             lon_cor, lat_cor = lon_cor[ymin:ymax + 1, xmin:xmax + 1], lat_cor[ymin:ymax + 1, xmin:xmax]
             lon_cen, lat_cen = lon_cen[ymin:ymax, xmin:xmax], lat_cen[ymin:ymax, xmin:xmax]
 
+
             filename = os.path.join(Config.IMAGEM_PATH,f'{fecha}.nc')
+            logger_qc.debug(f'Buscando arhcivo de imagen: {filename}')
             if self.validate_images_goes(filename):               
                 return filename
 
+            logger_qc.debug(f'Leyendo archivo dataset en : {filename}')
             f = Dataset(filename, 'w', format='NETCDF4')
             f.close()
-
+            
+            logger_qc.debug(f'Convirtiendo fecha del goes')
             fecha_ini = self.conver_goes_date(fecha, mm=-(10 * len(Config.TIEMPOS))) # TODO - len(p['tiempos'])
             fecha_fin = self.conver_goes_date(fecha, mm=10)
 
             temp_path = os.path.join(Config.IMAGEM_PATH,'dlImages/')
+            logger_qc.debug(f'Carpeta temporal de imagenes: {temp_path}')
+
+            logger_qc.debug(f'Limpiando limites de carpetas: {temp_path} - {Config.IMAGEM_PATH}')
             self.clean_folder_if_exceeds_limit(temp_path,Config.MAX_TEMP_FOLDER_SIZE, files_to_remove=len(Config.TIEMPOS)*len(Config.CANALES))
             self.clean_folder_if_exceeds_limit(Config.IMAGEM_PATH,Config.MAX_IMAGE_FOLDER_SIZE, files_to_remove=12)
             LonCen = None
             for c in Config.CANALES:
+                logger_qc.debug(f'buscando imagenes de GOES canal: {c}')
                 filesT = GOES.download('goes16', 'ABI-L2-CMIPF',
                                        DateTimeIni=fecha_ini, DateTimeFin=fecha_fin,
                                        channel=[c], rename_fmt='%Y%m%d%H%M%S', path_out=temp_path)
 
                 if len(filesT) < len(Config.TIEMPOS):
+                    logger_qc.debug(f'No se encontro suficientes imagenes para el canal')
                     self.errors.append(f"No se encontraron suficientes imágenes para el canal {c}")
                     self.success = False
                     os.remove(filename)
                     return ''
 
                 for i in range(len(filesT)):
+                    logger_qc.debug(f'Procesando tiempo {i} en canal {c}')
                     ds = GOES.open_dataset(filesT[len(filesT) - i - 1])
 
+                    logger_qc.debug(f'Verificando tiempo y canales correctos')
                     if i == 0 and c == Config.CANALES[0] and Config.SAVE_IMAGES:
                         CMI, LonCen, LatCen = ds.image('CMI', lonlat='center', domain=domain)
                         domain_in_pixels = CMI.pixels_limits
                         mask = np.where(np.isnan(CMI.data) == True, True, False)
+                        logger_qc.debug(f'Procesando cordenadas {i}-{c}')
                         self.save_coordinates(filename, lon_cen, lat_cen)
                     else:
                         CMI, _, _ = ds.image('CMI', lonlat='none', domain_in_pixels=domain_in_pixels, nan_mask=mask)
 
+                    logger_qc.debug(f'reproyectando!')
                     CMICyl = self.reproject(CMI.data, LonCen.data, LatCen.data, lon_cen, lat_cen)
+                    logger_qc.debug(f'Gaurdando en archov NC')
                     error_save = self.save_nc_file(filename, i, c, (CMICyl * 100).astype(np.int16), lon_cen, lat_cen)
                     if error_save:
                         os.remove(filename)
