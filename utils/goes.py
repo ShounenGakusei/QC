@@ -215,6 +215,19 @@ class GOESImageProcessor:
             logger_qc.info(f"--------Iniciando descarga de imagen GOES para {fecha}")
             domain = Config.DOMAIN
 
+            
+
+            logger_qc.debug(f'Buscando arhcivo de imagen: {Config.IMAGEM_PATH}')
+            filename = os.path.join(Config.IMAGEM_PATH,f'{fecha}.nc')
+            logger_qc.debug(f'Buscando arhcivo de imagen: {filename}')
+            if self.validate_images_goes(filename):               
+                return filename
+            else:
+                self.errors.append(f"No se ha descargado aun la fecha {filename}")
+                self.success = False
+                return ''
+            
+
             # Coordenadas iniciales
             pixresol = 2.0
             xmin, xmax = 80, 1030
@@ -228,16 +241,7 @@ class GOESImageProcessor:
             lon_cen, lat_cen = np.meshgrid(lon_cen, lat_cen)
             lon_cor, lat_cor = lon_cor[ymin:ymax + 1, xmin:xmax + 1], lat_cor[ymin:ymax + 1, xmin:xmax]
             lon_cen, lat_cen = lon_cen[ymin:ymax, xmin:xmax], lat_cen[ymin:ymax, xmin:xmax]
-
-            logger_qc.debug(f'Buscando arhcivo de imagen: {Config.IMAGEM_PATH}')
-            filename = os.path.join(Config.IMAGEM_PATH,f'{fecha}.nc')
-            logger_qc.debug(f'Buscando arhcivo de imagen: {filename}')
-            if self.validate_images_goes(filename):               
-                return filename
-            else:
-                self.errors.append(f"No se ha descargado aun la fecha {filename}")
-                self.success = False
-                return ''
+            
             logger_qc.debug(f'Leyendo archivo dataset en : {filename}')
             f = Dataset(filename, 'w', format='NETCDF4')
             f.close()
