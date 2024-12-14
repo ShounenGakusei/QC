@@ -229,7 +229,7 @@ class GOESImageProcessor:
             lon_cor, lat_cor = lon_cor[ymin:ymax + 1, xmin:xmax + 1], lat_cor[ymin:ymax + 1, xmin:xmax]
             lon_cen, lat_cen = lon_cen[ymin:ymax, xmin:xmax], lat_cen[ymin:ymax, xmin:xmax]
 
-
+            logger_qc.debug(f'Buscando arhcivo de imagen: {Config.IMAGEM_PATH}')
             filename = os.path.join(Config.IMAGEM_PATH,f'{fecha}.nc')
             logger_qc.debug(f'Buscando arhcivo de imagen: {filename}')
             if self.validate_images_goes(filename):               

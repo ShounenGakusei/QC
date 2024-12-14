@@ -1,10 +1,12 @@
 from flask import Flask, render_template, request, jsonify
 import numpy as np
 import tensorflow as tf
-from utils.config import Config
 from utils.goes import GOESImageProcessor, schedule_download
 from flask_apscheduler import APScheduler
 from utils.predict import Predict_Model
+from utils.config import Config
+
+
 
 
 app = Flask(__name__,static_folder='static')
@@ -17,6 +19,11 @@ except Exception as e:
     print('ERROR AL INICAR EL MODELO !')
 is_running = False
 
+
+def check_config():
+    for attribute, value in vars(Config).items():
+        print(f'PARAMETROS INCIALES DEL SISTEMA! ')
+        print(f'{attribute}: {value}')
 
 @app.route('/')
 def home():
