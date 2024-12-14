@@ -58,7 +58,7 @@ class GOESImageProcessor:
             # Lógica de validación de estructura del archivo GOES (reemplazar con validación real)
             # Ejemplo: Verifica si el archivo NetCDF tiene las variables esperadas.
             with Dataset(filename, 'r') as ds:
-                logger_qc.debug(f'Leyendo file dataset', filename)
+                logger_qc.debug(f'Leyendo file dataset {filename}')
                 # Recorrer los canales y tiempos definidos en Config
                 for c in Config.CANALES:
                     if not valido:
@@ -241,7 +241,7 @@ class GOESImageProcessor:
             lon_cen, lat_cen = np.meshgrid(lon_cen, lat_cen)
             lon_cor, lat_cor = lon_cor[ymin:ymax + 1, xmin:xmax + 1], lat_cor[ymin:ymax + 1, xmin:xmax]
             lon_cen, lat_cen = lon_cen[ymin:ymax, xmin:xmax], lat_cen[ymin:ymax, xmin:xmax]
-            
+
             logger_qc.debug(f'Leyendo archivo dataset en : {filename}')
             f = Dataset(filename, 'w', format='NETCDF4')
             f.close()
