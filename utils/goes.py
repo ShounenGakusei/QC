@@ -306,4 +306,7 @@ class GOESImageProcessor:
             traceback.print_exc()
             self.errors.append(f"Error en download_image_goes: {e}")
             self.success = False
-            os.remove(filename)
+            try:
+                os.remove(filename)
+            except:
+                pass
