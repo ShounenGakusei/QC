@@ -45,12 +45,12 @@ def execute_task():
     task_running = True
 
     # Obtener la fecha de la imagen (1 hora antes)
-    fecha = (last_run_time - timedelta(hours=1)).strftime("%Y%m%d%H%M")
+    fecha = (last_run_time - timedelta(hours=1)).strftime("%Y-%m-%d-%H")
     
     # Ejecutar la tarea
     cGoes = GOESImageProcessor()
     try:
-        cGoes.download_images_goes(fecha)
+        cGoes.download_image_goes(fecha + '-00')
     except Exception as e:
         print(f"Error al descargar la imagen: {e}")
     finally:
@@ -65,6 +65,7 @@ def schedule_task():
     while True:
         # Si no se está ejecutando, iniciar una nueva tarea
         if not task_running:
+            print(f'Iniciando schedule, ultimo ejecutado: {last_run_time}')
             task_thread = threading.Thread(target=execute_task)
             task_thread.start()
         
@@ -77,8 +78,8 @@ def schedule_task():
                 task_running = False
                 task_thread = None
         
-        # Esperar 10 minutos antes de verificar nuevamente
-        time.sleep(600)
+        # Esperar 1 minutos antes de verificar nuevamente
+        time.sleep(60)
 
 
 # Iniciar la tarea programada en un hilo separado
