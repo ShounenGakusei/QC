@@ -36,6 +36,9 @@ task_running = False
 last_run_time = None
 task_thread = None
 
+offset = 0
+mes_offset = [x for x in range(12)]
+
 # Función para ejecutar la tarea
 def execute_task():
     global task_running, last_run_time, task_thread
@@ -56,6 +59,7 @@ def execute_task():
     finally:
         task_running = False
         task_thread = None
+       
 
 
 # Planificar la tarea periódica

@@ -11,10 +11,11 @@ app = Flask(__name__,static_folder='static')
 #scheduler = APScheduler()
 #scheduler.api_enabled = True
 try:
-    model = tf.keras.models.load_model(Config.MODEL_PATH)
+    model = tf.keras.models.load_model(os.path.join(Config.MODEL_PATH, 'model_v3.hdf5'))
+
 except Exception as e:
     model = None
-    print('ERROR AL INICAR EL MODELO !')
+    print('ERROR AL INICAR EL MODELO !', str(e))
 is_running = False
 
 
@@ -50,7 +51,7 @@ def check_files():
     for file in files:
         file_path = os.path.join(folder_path, file)
         if cGoes.validate_images_goes(file_path):  # Verifica si la imagen es válida
-            result.append(file)  # Añadir al resultado si es válida
+            result.append(file[:-3])  # Añadir al resultado si es válida
 
     # Regresar los archivos existentes y válidos
     if result:

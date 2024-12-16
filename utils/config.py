@@ -4,7 +4,7 @@ class Config:
     # Umbrales para la clasificación
     LOG_LEVEL = 'DEBUG'  # Nivel de logs: DEBUG, INFO, WARNING, ERROR
     LOG_FILE = 'app_logs.log'  # Archivo donde se guardan los logs
-    MODEL_PATH = os.path.join(os.getcwd(), 'models', 'model.hdf5')
+    MODEL_PATH = os.path.join(os.getcwd(), 'models')
     IMAGEM_PATH = os.path.join(os.getcwd(), 'imagenes')
     STATION_PATH = os.path.join(os.getcwd(), 'static', 'stations_data.csv')
     SAVE_IMAGES = True
