@@ -217,7 +217,7 @@ class GOESImageProcessor:
                     print(f"Error al eliminar el archivo temporal {files[i][0]}: {e}")
 
 
-    def download_image_goes(self, fecha):
+    def download_image_goes(self, fecha, download=True):
         logger_qc.debug(f'Iniciando meotdo download_image_goes')
         pattern = r'^\d{4}-\d{2}-\d{2}-\d{2}-\d{2}$'  # Formato: YYYY-MM-DD-HH-MM
         if not re.match(pattern, fecha):
@@ -236,6 +236,12 @@ class GOESImageProcessor:
             logger_qc.debug(f'Buscando arhcivo de imagen: {filename}')
             if self.validate_images_goes(filename):               
                 return filename
+            
+            if not download:
+                logger_qc.debug(f'Aun no se ha descargado la fecha: {fecha}')
+                self.errors.append(f'Aun no se ha descargado la fecha: {fecha}')
+                self.success = False
+                return ''
             
             # Coordenadas iniciales
             pixresol = 2.0

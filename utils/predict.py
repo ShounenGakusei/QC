@@ -112,7 +112,7 @@ class Predict_Model():
         }
     
         cGoes = GOESImageProcessor()
-        self.filename = cGoes.download_image_goes(self.fecha)
+        self.filename = cGoes.download_image_goes(self.fecha, download=False)
         if not cGoes.success:
             self.errors.append(f"Error en obtener imagen GOES para fecha {self.fecha}: {str(cGoes.errors)}")
             self.success = False
