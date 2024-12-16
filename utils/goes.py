@@ -132,7 +132,7 @@ class GOESImageProcessor:
         return False  # Todo se guardó correctamente
 
 
-    def reproject(self, CMI, LonCen, LatCen, LonCenCyl, LatCenCyl):
+    def _reproject(self, CMI, LonCen, LatCen, LonCenCyl, LatCenCyl):
         try:
            
 
@@ -161,7 +161,7 @@ class GOESImageProcessor:
             print(str(e))
             return None
         
-    def _reproject(self, CMI, LonCen, LatCen, LonCenCyl, LatCenCyl):
+    def reproject(self, CMI, LonCen, LatCen, LonCenCyl, LatCenCyl):
         try:
             logger_qc.info("Reproyectando datos")
             Prj = pyproj.Proj('+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +a=6378.137 +b=6378.137 +units=km')
