@@ -281,7 +281,10 @@ class GOESImageProcessor:
                     logger_qc.debug(f'No se encontro suficientes imagenes para el canal')
                     self.errors.append(f"No se encontraron suficientes imágenes para el canal {c}")
                     self.success = False
-                    os.remove(filename)
+                    try:
+                        os.remove(filename)
+                    except:
+                        pass
                     return ''
 
                 for i in range(len(filesT)):
@@ -303,7 +306,10 @@ class GOESImageProcessor:
                     logger_qc.debug(f'Gaurdando en archov NC')
                     error_save = self.save_nc_file(filename, i, c, (CMICyl * 100).astype(np.int16), lon_cen, lat_cen)
                     if error_save:
-                        os.remove(filename)
+                        try:
+                            os.remove(filename)
+                        except:
+                            pass
                         return ''
 
             logger_qc.info(f"Tiempo de procesamiento: {time.time() - start_time:.2f}s")
