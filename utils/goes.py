@@ -12,6 +12,7 @@ from pyresample import utils
 from pyresample.geometry import SwathDefinition
 from pyresample import bilinear
 import re
+import gc
 
 def schedule_download():
     """
@@ -132,6 +133,35 @@ class GOESImageProcessor:
 
 
     def reproject(self, CMI, LonCen, LatCen, LonCenCyl, LatCenCyl):
+        try:
+           
+
+            Prj = pyproj.Proj('+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +a=6378.137 +b=6378.137 +units=km')
+            AreaID = 'cyl'
+            AreaName = 'cyl'
+            ProjID = 'cyl'
+            Proj4Args = '+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +a=6378.137 +b=6378.137 +units=km'
+
+            ny, nx = LonCenCyl.shape
+            SW = Prj(LonCenCyl.min(), LatCenCyl.min())
+            NE = Prj(LonCenCyl.max(), LatCenCyl.max())
+            area_extent = [SW[0], SW[1], NE[0], NE[1]]
+
+            AreaDef = utils.get_area_def(AreaID, AreaName, ProjID, Proj4Args, nx, ny, area_extent)
+            SwathDef = SwathDefinition(lons=LonCen, lats=LatCen)
+
+            CMICyl = bilinear.resample_bilinear(CMI, SwathDef, AreaDef, radius=6000, fill_value=np.nan, reduce_data=False)
+
+            # Liberar memoria innecesaria
+            del LonCen, LatCen
+            gc.collect()
+
+            return CMICyl
+        except Exception as e:
+            print(str(e))
+            return None
+        
+    def _reproject(self, CMI, LonCen, LatCen, LonCenCyl, LatCenCyl):
         try:
             logger_qc.info("Reproyectando datos")
             Prj = pyproj.Proj('+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +a=6378.137 +b=6378.137 +units=km')
@@ -302,9 +332,9 @@ class GOESImageProcessor:
                         CMI, _, _ = ds.image('CMI', lonlat='none', domain_in_pixels=domain_in_pixels, nan_mask=mask)
 
                     logger_qc.debug(f'reproyectando!')
-                    CMICyl = self.reproject(CMI.data, LonCen.data, LatCen.data, lon_cen, lat_cen)
+                    CMI = self.reproject(CMI.data, LonCen.data, LatCen.data, lon_cen, lat_cen)
                     logger_qc.debug(f'Gaurdando en archov NC')
-                    error_save = self.save_nc_file(filename, i, c, (CMICyl * 100).astype(np.int16), lon_cen, lat_cen)
+                    error_save = self.save_nc_file(filename, i, c, (CMI * 100).astype(np.int16), lon_cen, lat_cen)
                     if error_save:
                         try:
                             os.remove(filename)
