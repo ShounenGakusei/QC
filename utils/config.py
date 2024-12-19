@@ -6,12 +6,14 @@ class Config:
     LOG_FILE = 'app_logs.log'  # Archivo donde se guardan los logs
     MODEL_PATH = os.path.join(os.getcwd(), 'models')
     IMAGEM_PATH = os.path.join(os.getcwd(), 'imagenes')
+    STATIC_PATH = os.path.join(os.getcwd(), 'static')
     STATION_PATH = os.path.join(os.getcwd(), 'static', 'stations_data.csv')
     SAVE_IMAGES = True
     CANALES = ["07", "08", "13"]
     TIEMPOS = ["00", "50", "40", "30", "20", "10"]
     
-    PORT = 5000
+    
+    PORT = 5000 # Servicio web principal
     MIN_IMAGE_SIZE = (28 * 1024 * 1024) # 20 MB
     MAX_TEMP_FOLDER_SIZE = 3 * (480 * 1024 * 1024) # 480mb pro hora
     MAX_IMAGE_FOLDER_SIZE = 12 * (28 * 1024 * 1024) # 28MB por hora

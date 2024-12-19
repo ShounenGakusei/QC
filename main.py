@@ -74,28 +74,30 @@ def download_goes_data(fecha):
     filename = cGoes.download_image_goes(fecha)
     return jsonify({'error': cGoes.errors, 'valido' : cGoes.success, 'filename' : filename})
 
-@app.route('/predict-ui', methods=['GET','POST'])
+@app.route('/predict-ui', methods=['GET', 'POST'])
 def predict_ui():
     if request.method == 'GET':
         return render_template('index.html')
- 
-    fecha = request.form.get('fecha', default='default', type=str)
-    codigo = request.form.get('codigo', default='default', type=str)
-    dato = request.form.get('dato', default='-1', type=str)
 
-    #data = model.predecir_unitario(fecha, codigo, dato)
-    output_data, input_data  = Predict_Model(model).get_prediction( fecha, codigo, dato)
-    
-    """
-    if output_data['Status'] and (type(input_data['imagen']) == np.ndarray):
-        input_data['imagen'] = np.transpose(input_data['imagen'], (0, 3, 1, 2))
-        fig = px.imshow(input_data['imagen'], animation_frame=0, facet_col=1, binary_string=True, labels={'facet_col': 'CANAL'})
-        plot_div = fig.to_html(full_html=False)
-        return render_template('prediccion-resumen.html', plot_div=plot_div, output=output_data)
-    else:
-        return render_template('prediccion-resumen.html', output=output_data)
-    """
-    return render_template('prediccion-resumen.html', output=output_data)
+    # Obtener datos del formulario
+    fecha = request.form.get('fecha', default='default', type=str)
+    dato = request.form.get('dato', default='-1', type=str)
+    latitud = request.form.get('latitud', default='0.0', type=str)
+    longitud = request.form.get('longitud', default='0.0', type=str)
+    altitud = request.form.get('altitud', default='0', type=str)
+    umbral = request.form.get('umbral', default='0', type=str)
+
+    # Realizar la predicción con el modelo
+    try:
+        output_data, input_data = Predict_Model(model).get_prediction(
+            fecha, dato, longitud, latitud, altitud, umbral
+        )
+    except Exception as e:
+        return render_template('error.html', error=str(e))  # Manejo de errores
+
+    # Renderizar el resumen de predicción
+    return render_template('prediccion-resumen.html', output=output_data, input=input_data)
+
 
 #@scheduler.task("interval", id="do_job_1", seconds=15*60)
 def goes_download_schedule():
@@ -109,6 +111,24 @@ def goes_download_schedule():
         schedule_download()  # Aquí va tu lógica de descarga
     finally:
         is_running = False  # Marcar la tarea como terminada, para que pueda ejecutarse nuevamente en el siguiente ciclo
+
+@app.route('/view-logs', methods=['GET'])
+def view_logs():
+    log_file_path = 'app_logs.log'  # Ruta al archivo de logs
+    try:
+        # Leer las últimas 200 líneas del archivo
+        with open(log_file_path, 'r') as log_file:
+            lines = log_file.readlines()
+            last_200_lines = lines[-200:]  # Obtener las últimas 200 líneas
+
+        # Formatear las líneas para mostrarlas en HTML
+        formatted_logs = ''.join(last_200_lines).replace('\n', '<br>')
+        return render_template('view_logs.html', logs=formatted_logs)
+
+    except FileNotFoundError:
+        return render_template('view_logs.html', logs="El archivo de logs no se encontró.")
+    except Exception as e:
+        return render_template('view_logs.html', logs=f"Error al leer los logs: {str(e)}")
 
 
 

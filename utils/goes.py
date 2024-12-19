@@ -250,6 +250,11 @@ class GOESImageProcessor:
     def download_image_goes(self, fecha, download=True):
         logger_qc.debug(f'Iniciando meotdo download_image_goes')
         pattern = r'^\d{4}-\d{2}-\d{2}-\d{2}-\d{2}$'  # Formato: YYYY-MM-DD-HH-MM
+
+        ## Caso de prueba
+        if fecha == '2024-11-27-15-00':
+            return os.path.join(Config.STATIC_PATH,f'{fecha}.nc')
+        
         if not re.match(pattern, fecha):
             logger_qc.debug(f'No se ingreso el foromato adecuado de fecha: {fecha}')
             self.errors.append("Formato de fecha inválido. Use YYYY-MM-DD-HH-MM.")

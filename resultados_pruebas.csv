@@ -1,0 +1,9 @@
+ID,Fecha,Dato,Longitud,Latitud,Altitud,Umbral,Valor Esperado (Status),Valor Devuelto (Status),Flag,Mensaje Devuelto
+0,2024-11-27-15-00,3,-80.0,-20.0,1000,8,True,True,C,[]
+"1,asda,3,-80.0,-20.0,1000,8,False,False,NC,""[""""Error en obtener imagen GOES para fecha asda: ['Formato de fecha inválido. Use YYYY-MM-DD-HH-MM.']""""]"""
+"2,2040-11-27-15-00,3,-80.0,-20.0,1000,8,False,False,NC,""[""""Error en obtener imagen GOES para fecha 2040-11-27-15-00: ['Aun no se ha descargado la fecha: 2040-11-27-15-00']""""]"""
+3,2024-11-27-15-00,-10,-80.0,-20.0,1000,8,False,False,NC,['El valor de precipitación debe ser positivo: -10.0']
+4,2024-11-27-15-00,3,-90.0,-20.0,1000,8,False,False,NC,['La longitud debe estar entre -88.0 y -63.0: -90.0']
+5,2024-11-27-15-00,3,-80.0,-30.0,1000,8,False,False,NC,['La latitud debe estar entre -25.0 y 5.0: -30.0']
+6,2024-11-27-15-00,3,-80.0,-20.0,1000,-10,False,False,NC,['El umbral debe ser un valor positivo: -10.0']
+7,2024-11-27-15-00,70,-80.0,-20.0,1000,8,True,True,M,[]
