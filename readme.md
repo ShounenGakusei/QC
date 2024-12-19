@@ -3,11 +3,15 @@
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 # Sistema de QC precipitaciones con DeepLearning  (Version 1.0.0)
-Proyecto para realizar QC de precipitacion.
+En Perú, el SENAMHI recolectó 3.5 millones de datos de precipitación entre 2020 y 2021 mediante estaciones meteorológicas automáticas. Del total, el sistema automatizado de control de calidad (QC) identificó el 4% de los datos como sospechosos por valores extremos, pero solo el 53% de estos fue validado manualmente a tiempo.
 
-> El proyecto tiene un proceso asincrono que se ejecuta cada 10 min. Este proceso descarga (en caso no se tenga aún) las imagenes satelitales de la ultima hora. 
+Para mejorar este proceso, se propone un modelo de aprendizaje profundo basado en imágenes satelitales y datos auxiliares para validar datos extremos en tiempo real. El modelo utiliza una arquitectura CNN-RNN entrenada con etiquetas del proceso manual de QC. 
 
-A pesar que el proyecto esta estructurado para analizar las preciptiaciones mas recientes, tambien se peude probar con fechas antiguas, sin embargo la primera vez demorara en descargar las imagenes satelitales, estas imagen se guardan en una carpeta de manera temporal, en caso se necesite especificar el espacio maximo a utilizar en el almacenamiento temporal, los parametros están en utils/config.py.
+# Servicio web
+
+> El proyecto tiene un proceso asíncrono que se ejecuta cada 10 minutos. Este proceso descarga (en caso no se tenga aún) las imagenes satelitales de la última hora. 
+
+Los parametros de configuracion del servicio web como el uso de espacio, validacion, umbral para definir el flag de conforme y malo están en utils/config.py.
 
 ## 1. Esctructura del proyecto  
 **La estructura base será:**  
@@ -32,7 +36,7 @@ base_dir/
 
 ## 2. Instalacion
 El servicio web esta desarrollado en Flask 3.1.0 en la version de Python 3.10.1. 
-Las librerias necesarias estan en el archivo req.txt, para su instalacion se puede seguir los siguientes pasos.
+Las librerias utilizadas estan en el archivo req.txt. Para su instalacion se puede seguir los siguientes pasos.
 
 - 1. Instalar python > 3.10.1
 - 2. Instalar las librerias utilizando CMD con el comando 
@@ -42,24 +46,25 @@ Las librerias necesarias estan en el archivo req.txt, para su instalacion se pue
 
 
 ## 3. Uso
-El uso del API principal sera BASE_URL/predict/< fecha >/< estacion >/< dato >
+El uso del API principal sera BASE_URL/predict/< fecha >/< dato >/< longitud >/< latitud >/< altitud >/< umbral >
 
-> e.g BASE_URL/predict/2022-02-01-07-00/X47E0D438/1.2
+> e.g BASE_URL/predict/2024-11-27-15-00/10/-80/-20/1000/8
 
 ## 4. Responses
-El API **/predict** retomaran un diccionario (json) con el siguiente campos (respetando minúsculas):
-- **Flag** : Indica si es malo (M), conforme (C) o NC (no corresponde).
+El API **/predict** retomara un diccionario (json) con los siguientes campos (respetando minúsculas):
+
+- **Flag** : Indica si es malo (M), conforme (C) o NC (no corresponde/Error).
 - **Message**: Mensaje de advertencia o error.
-- **Probability** : Probabilidad de ser conforme el dato (de 0 a 1).
-- **Status** : True si el proceso se ejecuto correctamente, caso contrario False.
+- **Probability** : Probabilidad de ser conforme el dato de precipitación (de 0 a 1).
+- **Status** : True, si el proceso se ejecutó correctamente, caso contrario será False.
 - **color** : Color subjetivo que indica el Flag (C=Verde ,M=Rojo, NC=Naranja)
-- **parametros** : Parametros que utilizo el modelo para su prediccion. 
-    - **Dato** : Valor de precipitacion en mm/h
-    - **Fecha** : Fecha en que sucedio la precipitacion 
+- **parametros** : Parametros que utilizó el modelo para su prediccion. 
+    - **Dato** : Valor de precipitación en mm/h
+    - **Fecha** : Fecha en que se tomó el valor de precipitacion 
     - **Latitud** : Latitud de la estacion
     - **Longitud** : Longitud de la estacion
     - **Altitud** : Altitud de la estacion
-    - **per90** : percentil 90 de los datos de precipitacion en la estacion
+    - **per90** : percentil 90 de los datos de precipitación en la estación
 
 ## 5. Logging
 Los logging se realizaran con logging de python. Se guardará en un archivo app_logs.log, además se imprimiran en la consola. **Los logging se colocarán despues de la logica que hace referencia**
@@ -68,11 +73,11 @@ El formato basico de los archivos de log tendrá
  
 
 Existen 5 niveles de Logging **info,debug,warning,error,critical**. Todas las vistas tendrán minimo estos logging:
-- Al inicio de la peticion (request) el middleware hará logging (info) del nombre de la consulta con un ID asignado. 
-- Al final de la peticion el middleware hará logging (info) con la metada generada de la peticion.
-- En caso de excepciones no mapeadas en el request, el middleware capturará la expcecion y generará un logging (critical), para así evitar que el backend deje de funcionar.
+- Al inicio de la petición (request) el middleware hará logging (info) del nombre de la consulta con un ID asignado. 
+- Al final de la petición el middleware hará logging (info) con la metada generada de la petición.
+- En caso de excepciones no mapeadas en el request, el middleware capturará la expceción y generará un logging (critical), para así evitar que el backend deje de funcionar.
 
 ## 6. Pruebas
-Se han desarrolado las pruebas unitarias y las pruebas de estrés con exito, se muestra los resultados de las pruebas de estres realizado en locust
+Se han desarrolado las pruebas unitarias y las pruebas de estrés con exito. Se adjunta el archivo de pruebas en el github.
 
 ![Pruebas de estres realizo en locust](static/media/test_charts.png)
