@@ -80,4 +80,12 @@ Existen 5 niveles de Logging **info,debug,warning,error,critical**. Todas las vi
 ## 6. Pruebas
 Se han desarrolado las pruebas unitarias y las pruebas de estrés con exito. Se adjunta el archivo de pruebas en el github.
 
+Se ha desplegado de manera global para realizar las pruebas pertinentes. 
+El acceso es a través del del IP 34.68.174.131:5000. Las rutas disponibles son:
+    -	http://34.68.174.131:5000/  : Acceso a la interfaz de pruebas
+    -	http://34.68.174.131:5000/predict/2024-11-27-16-00/0.2/-80/-20/100/1 : Uso de endpoint
+    -	http://34.68.174.131:5000/view-logs : Visualizar Logs
+    -	http://34.68.174.131:5000/check_images : Visualizar imágenes disponibles
+
+
 ![Pruebas de estres realizo en locust](static/media/test_charts.png)
