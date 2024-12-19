@@ -1,5 +1,5 @@
 import traceback
-import pandas as pd
+#import pandas as pd
 import tensorflow as tf
 from utils.logs import logger_qc
 from utils.config import Config
@@ -83,7 +83,7 @@ class Predict_Model():
             return {}
         
         try:
-            self.stations = pd.read_csv(Config.STATION_PATH).set_index('CODE').to_dict(orient='index')
+            self.stations = None#pd.read_csv(Config.STATION_PATH).set_index('CODE').to_dict(orient='index')
         except Exception as e:
             self.errors.append(f"Error en abrir el archivo de estaciones: {Config.STATION_PATH}-{str(e)}")
             self.success = False
@@ -95,6 +95,7 @@ class Predict_Model():
         if not self.success:
             return {}
         
+        """
         try:
             data_station = self.stations[self.station]
         except KeyError:
@@ -102,12 +103,13 @@ class Predict_Model():
             self.success = False
             logger_qc.error(f"No se encontró la estacion en la base {self.station}")
             return {}
-        
+        """
+
         result =  {
-            'alt' : data_station['ALT'],
-            'umb1' : data_station['Umbral1'], 
-            'coordLon':float(data_station['LON']), 
-            'coordLat':float(data_station['LAT']),
+            'alt' : self.altitud,
+            'umb1' : self.umbral, 
+            'coordLon': self.longitud, 
+            'coordLat': self.latitud,
             'value' : self.value
         }
     
@@ -141,24 +143,70 @@ class Predict_Model():
         pred_value = round(float(prediction[0]),4)
         return pred_value, 'C' if pred_value >= Config.UMBRAL else 'M'
     
-    def get_prediction(self, fecha, station, value):
-        logger_qc.info(f"Iniciando prediccion :  {fecha} - {station} - {value}")
-        response = {}
-        self.fecha = fecha
-        self.station = station
-        self.value = value
-
-        self.filename = ''
-        
+    def _validar_input(self):
         try:
-            self.value = float(value)
+            # Validar 'value'
+            self.value = float(self.value)
             if self.value < 0:
-                self.errors.append(f'El valor de precipitacin debe ser positivo: {self.value}')    
+                self.errors.append(f'El valor de precipitación debe ser positivo: {self.value}')    
                 self.success = False
         except ValueError:
-            self.errors.append(f'El dato de precipitacion no se peude convertir a float: {self.value}')
+            self.errors.append(f'El dato de precipitación no se puede convertir a float: {self.value}')
             self.success = False
 
+        # Validar 'longitud'
+        try:
+            self.longitud = float(self.longitud)
+            if not (-88.0 <= self.longitud <= -63.0):
+                self.errors.append(f'La longitud debe estar entre -88.0 y -63.0: {self.longitud}')
+                self.success = False
+        except ValueError:
+            self.errors.append(f'El dato de longitud no se puede convertir a float: {self.longitud}')
+            self.success = False
+
+        # Validar 'latitud'
+        try:
+            self.latitud = float(self.latitud)
+            if not (-25.0 <= self.latitud <= 5.0):
+                self.errors.append(f'La latitud debe estar entre -25.0 y 5.0: {self.latitud}')
+                self.success = False
+        except ValueError:
+            self.errors.append(f'El dato de latitud no se puede convertir a float: {self.latitud}')
+            self.success = False
+
+        # Validar 'altitud'
+        try:
+            self.altitud = float(self.altitud)
+            if self.altitud < 0:
+                self.errors.append(f'La altitud debe ser un valor positivo: {self.altitud}')
+                self.success = False
+        except ValueError:
+            self.errors.append(f'El dato de altitud no se puede convertir a float: {self.altitud}')
+            self.success = False
+
+        # Validar 'umbral'
+        try:
+            self.umbral = float(self.umbral)
+            if self.umbral < 0:
+                self.errors.append(f'El umbral debe ser un valor positivo: {self.umbral}')
+                self.success = False
+        except ValueError:
+            self.errors.append(f'El dato de umbral no se puede convertir a float: {self.umbral}')
+            self.success = False
+
+    def get_prediction(self, fecha, value, longitud, latitud, altitud, umbral):
+        logger_qc.info(f"Iniciando predicción: {fecha} - {value}")
+        response = {}
+        self.fecha = fecha
+        self.value = value
+        self.longitud = longitud
+        self.latitud = latitud
+        self.altitud = altitud
+        self.umbral = umbral
+        self._validar_input()
+
+
+        self.filename = ''
 
         # Validamos la data
         input_model = self._get_model_data()
@@ -171,7 +219,6 @@ class Predict_Model():
             response = {'Flag': pred_text, 'Message': self.errors, 
                                 'parametros': {'Dato': self.value,
                                                 'Fecha': self.fecha,
-                                                'station' : self.station,
                                                 'Longitud': input_model['coordLon'],
                                                 'Latitud': input_model['coordLat'],
                                                 'altitud': input_model['alt'],
@@ -183,7 +230,7 @@ class Predict_Model():
             response['color'] = colores[response['Flag']]
         else:
             response = {'Flag' : 'NC', 'Message' : self.errors, 'parametros' : {'Dato': self.value,
-                                                'Fecha': self.fecha,'station' : self.station}
+                                                'Fecha': self.fecha}
                                                 , 'Status' : False, 'Probability' : 0}
 
         return response ,input_model

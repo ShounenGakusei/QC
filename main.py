@@ -61,10 +61,10 @@ def check_files():
 
 
     
-@app.route('/predict/<fecha>/<codigo>/<dato>', methods=['GET'])
-def predict(fecha, codigo, dato):
+@app.route('/predict/<fecha>/<dato>/<longitud>/<latitud>/<altitud>/<umbral>', methods=['GET'])
+def predict(fecha, dato, longitud, latitud, altitud, umbral):
     print('INICIO DE PREDICCION...')
-    output_data, input_data  = Predict_Model(model).get_prediction( fecha, codigo, dato)
+    output_data, input_data  = Predict_Model(model).get_prediction( fecha, dato, longitud, latitud, altitud, umbral)
 
     return jsonify(output_data)
 
